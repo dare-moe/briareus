@@ -1,0 +1,27 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+description = "Briareus YARN"
+
+dependencies {
+    api(project(":briareus-api"))
+    implementation(project(':briareus-common'))
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    runtimeOnly("org.slf4j:jcl-over-slf4j:$slf4jVersion")
+    api("org.apache.hadoop:hadoop-yarn-client:$hadoopVersion") {
+        exclude group: 'log4j', module: 'log4j'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+    api("org.apache.hadoop:hadoop-common:$hadoopVersion") {
+        exclude group: 'log4j', module: 'log4j'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'commons-logging', module: 'commons-logging'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-server'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-webapp'
+    }
+}

@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+description = "Briareus Local"
+
+dependencies {
+    api(project(':briareus-api'))
+    implementation(project(':briareus-common'))
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+}

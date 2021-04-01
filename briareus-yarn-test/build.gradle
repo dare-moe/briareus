@@ -1,0 +1,18 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    implementation(project(":briareus-yarn"))
+    runtimeOnly("org.slf4j:slf4j-simple:$slf4jVersion")
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
