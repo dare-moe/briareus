@@ -57,7 +57,7 @@ public class Test {
                 .forEach(conf::addResource);
     }
 
-    private static final FileEntry JAR = FileEntry.copy(FileSources.filePathSource(JAR_PATH), JAR_NAME);
+    private static final FileEntry JAR = FileEntry.copy(FileSources.fileSource(JAR_PATH), JAR_NAME);
     private static final FileEntry JRE = FileEntry.unzip(HdfsFileSource.publicScopeSource(new Path("hdfs:///tmp/adopt_openjdk_11.zip"), conf), "JRE");
     private static final Path dir = new Path("hdfs:///tmp/" + UUID.randomUUID());
     private static final ExecutorService pool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("upload-pool-%d").setDaemon(true).build());
@@ -152,6 +152,5 @@ public class Test {
                 ctxt.setFinalStatus(ApplicationStatus.failed("Exception " + e.getMessage()));
             }
         }
-
     }
 }

@@ -34,8 +34,12 @@ public class FileSources {
     /**
      * @param path path to resource
      * @return new file source pointing to given file.
+     * @throws IllegalArgumentException if given path does not exists or its existence cannot be determined.
      */
-    public static FileSource filePathSource(Path path) {
+    public static FileSource fileSource(Path path) {
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Path " + path + " dose not exists");
+        }
         return new FilePathSource(path);
     }
 

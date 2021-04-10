@@ -19,8 +19,10 @@ import static java.util.Objects.requireNonNull;
  *     <li>max heap size</li>
  *     <li>arguments which will be passed to main method</li>
  *     <li>context specific options</li>
- *     <li></li>
+ *     <li>Main class name</li>
  * </ul>
+ *
+ * The only required option is main class name.
  */
 public class RemoteJvmOptions {
     /**
