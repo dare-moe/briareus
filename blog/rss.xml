@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Dare Briareus Blog</title>
+        <link>https://briareus.dare.moe/blog</link>
+        <description>Dare Briareus Blog</description>
+        <lastBuildDate>Sat, 10 Apr 2021 00:00:00 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <item>
+            <title><![CDATA[Hello world.]]></title>
+            <link>https://briareus.dare.moe/blog/2021/04/10/starting</link>
+            <guid>Hello world.</guid>
+            <pubDate>Sat, 10 Apr 2021 00:00:00 GMT</pubDate>
+            <description><![CDATA[Briareus is starting]]></description>
+        </item>
+    </channel>
+</rss>

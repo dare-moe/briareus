@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://briareus.dare.moe/blog</id>
+    <title>Dare Briareus Blog</title>
+    <updated>2021-04-10T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://briareus.dare.moe/blog"/>
+    <subtitle>Dare Briareus Blog</subtitle>
+    <icon>https://briareus.dare.moe/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Hello world.]]></title>
+        <id>Hello world.</id>
+        <link href="https://briareus.dare.moe/blog/2021/04/10/starting"/>
+        <updated>2021-04-10T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Briareus is starting]]></summary>
+    </entry>
+</feed>
