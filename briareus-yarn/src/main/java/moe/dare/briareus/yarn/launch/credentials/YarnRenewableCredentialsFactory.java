@@ -143,7 +143,7 @@ public class YarnRenewableCredentialsFactory implements CredentialsFactory {
             }
             long readLock = lock.readLock();
             try {
-                if (!isValid()) {
+                if (isValid()) {
                     return credentials;
                 }
             } finally {
@@ -151,7 +151,7 @@ public class YarnRenewableCredentialsFactory implements CredentialsFactory {
             }
             long writeLock = lock.writeLock();
             try {
-                if (isValid()) {
+                if (!isValid()) {
                     createNewTokens();
                 }
                 return credentials;
@@ -213,7 +213,7 @@ public class YarnRenewableCredentialsFactory implements CredentialsFactory {
         }
 
         private boolean isValid() {
-            return validTo.isBefore(clock.instant());
+            return clock.instant().isBefore(validTo);
         }
     }
 
