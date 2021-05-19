@@ -2,11 +2,18 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://briareus.dare.moe/blog</id>
     <title>Dare Briareus Blog</title>
-    <updated>2021-04-10T00:00:00.000Z</updated>
+    <updated>2021-05-19T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://briareus.dare.moe/blog"/>
     <subtitle>Dare Briareus Blog</subtitle>
     <icon>https://briareus.dare.moe/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Welcome Bria-chan]]></title>
+        <id>Welcome Bria-chan</id>
+        <link href="https://briareus.dare.moe/blog/2021/05/19/bria-chan"/>
+        <updated>2021-05-19T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Introducing briareus mascot.]]></summary>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Hello world.]]></title>
         <id>Hello world.</id>

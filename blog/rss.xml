@@ -4,9 +4,16 @@
         <title>Dare Briareus Blog</title>
         <link>https://briareus.dare.moe/blog</link>
         <description>Dare Briareus Blog</description>
-        <lastBuildDate>Sat, 10 Apr 2021 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 19 May 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
+        <item>
+            <title><![CDATA[Welcome Bria-chan]]></title>
+            <link>https://briareus.dare.moe/blog/2021/05/19/bria-chan</link>
+            <guid>Welcome Bria-chan</guid>
+            <pubDate>Wed, 19 May 2021 00:00:00 GMT</pubDate>
+            <description><![CDATA[Introducing briareus mascot.]]></description>
+        </item>
         <item>
             <title><![CDATA[Hello world.]]></title>
             <link>https://briareus.dare.moe/blog/2021/04/10/starting</link>

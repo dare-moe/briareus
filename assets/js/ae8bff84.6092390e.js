@@ -1,0 +1,1 @@
+(self.webpackChunkbriareus=self.webpackChunkbriareus||[]).push([[126],{6353:function(e){"use strict";e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Welcome Bria-chan","permalink":"/blog/2021/05/19/bria-chan"},{"title":"Hello world.","permalink":"/blog/2021/04/10/starting"}]}')}}]);
