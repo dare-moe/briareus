@@ -12,8 +12,16 @@
   overflow: hidden;
 }
 
-@media screen and (max-width: 966px) {
+.heroImage {
+  height: 300px;
+  object-fit: cover;
+}
+
+@media screen and (max-width: 996px) {
   .heroBanner {
+    padding: 2rem;
+  }
+  .heroImage {
     padding: 2rem;
   }
 }
@@ -32,6 +40,7 @@
 }
 
 .featureImage {
-  height: 200px;
-  width: 200px;
+  object-fit: scale-down;
+  width: 225px;
+  height: 300px;
 }

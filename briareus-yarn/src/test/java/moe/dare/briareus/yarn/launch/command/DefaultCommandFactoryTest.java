@@ -19,6 +19,31 @@ class DefaultCommandFactoryTest {
     private final UserGroupInformation TEST_USER = UserGroupInformation.createRemoteUser(TEST_USER_NAME);
 
     @Test
+    @DisplayName("Java arguments are base64 encoded")
+    void testCommandBase64() {
+        LaunchCommandFactory factory = createTestInstance(AuthenticationMethod.SIMPLE);
+        LaunchOptions options = factory.createLaunchOptions(newOptions()
+                .maxHeapSize(1024000L)
+                .addVmOption("-Xms77777")
+                .addClasspath("jar1")
+                .addClasspath("jar2")
+                .addClasspath("lib/*")
+                .addArgument("arg1")
+                .addArgument("arg2")
+                .build());
+        validateCommon(options);
+        assertThat(options.command()).singleElement(InstanceOfAssertFactories.STRING)
+                .startsWith("bash .briareus_launcher " +
+                        "LVhtczc3Nzc3 " + //-Xms77777
+                        "LWNw " + //-cp
+                        "amFyMTpqYXIyOmxpYi8q " + //jar1:jar2:lib/*
+                        "LVhteDEwMjQwMDA= " + //-Xmx1024000
+                        "Y29tLmV4YW1wbGUuTWFpbg== " + //com.example.Main
+                        "YXJnMQ== " + //arg1
+                        "YXJnMg== "); //arg2
+    }
+
+    @Test
     @DisplayName("With simple auth HADOOP_USER_NAME should be set")
     void testSimpleAuth() {
         LaunchCommandFactory factory = createTestInstance(AuthenticationMethod.SIMPLE);

@@ -22,6 +22,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.assertj.core.api.ListAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,11 +35,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@Timeout(10)
 class YarnRenewableCredentialsFactoryTest {
     private static final String RM_PRINCIPAL_NAME = "test-rm-principal";
     private final Configuration delegateConf = createConfiguration();
@@ -49,6 +54,34 @@ class YarnRenewableCredentialsFactoryTest {
     FileSystem mockFs;
     @Mock
     RemoteJvmOptions options;
+
+    @Test
+    @DisplayName("Exception during obtaining tokens is not cached")
+    void testFailingDelegationTokens(@Mock(name = "test-token") Token<TokenIdentifier> token) throws IOException {
+        when(token.decodeIdentifier()).thenReturn(new TestDelegationTokenIdentifier(FAR_FUTURE_MAX_DATE));
+        AtomicReference<Object> getTokenResult = new AtomicReference<>();
+        IOException ioException = new IOException("some io problems");
+        RuntimeException runtimeException = new RuntimeException("runtime exception");
+        try (Context context = new Context(mockFs)) {
+            context.setTime(Instant.EPOCH);
+            when(mockFs.getDelegationToken(RM_PRINCIPAL_NAME)).thenAnswer(iom -> {
+                Object obj = getTokenResult.get();
+                if (obj instanceof Throwable) {
+                    throw (Throwable) obj;
+                }
+                return obj;
+            });
+            getTokenResult.set(ioException);
+            Throwable forIoException = catchThrowable(context.obtainCredentials(context.uploadedEntry())::join);
+            getTokenResult.set(runtimeException);
+            Throwable forRuntimeException = catchThrowable(context.obtainCredentials(context.uploadedEntry())::join);
+            getTokenResult.set(token);
+            Credentials credentials = context.obtainCredentialsSync(context.uploadedEntry());
+            assertThat(forIoException).hasRootCause(ioException);
+            assertThat(forRuntimeException).hasRootCause(runtimeException);
+            assertThat(credentials.getAllTokens()).singleElement().isSameAs(token);
+        }
+    }
 
     @Test
     @DisplayName("Close enough invocations should return cached tokens")
@@ -161,8 +194,12 @@ class YarnRenewableCredentialsFactoryTest {
             clock.setInstant(time);
         }
 
+        private CompletableFuture<Credentials> obtainCredentials(UploadedEntry... entries) {
+            return instance.tokens(options, Arrays.asList(entries)).toCompletableFuture();
+        }
+
         private Credentials obtainCredentialsSync(UploadedEntry... entries) {
-            return instance.tokens(options, Arrays.asList(entries)).toCompletableFuture().join();
+            return obtainCredentials(entries).join();
         }
 
         private UploadedEntry uploadedEntry() {
