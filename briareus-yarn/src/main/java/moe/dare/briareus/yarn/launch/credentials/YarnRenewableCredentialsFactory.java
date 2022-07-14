@@ -1,41 +1,34 @@
 package moe.dare.briareus.yarn.launch.credentials;
 
 import moe.dare.briareus.api.BriareusException;
-import moe.dare.briareus.api.RemoteJvmOptions;
 import moe.dare.briareus.common.concurrent.ThreadFactoryBuilder;
-import moe.dare.briareus.yarn.launch.files.UploadedEntry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod;
-import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
-import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.PrivilegedAction;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * CredentialsFactory which obtains delegation tokens for uploaded files
  */
-public class YarnRenewableCredentialsFactory implements CredentialsFactory {
+public class YarnRenewableCredentialsFactory extends CredentialsFactoryBase {
     private static final Logger log = LoggerFactory.getLogger(YarnRenewableCredentialsFactory.class);
     private static final Duration MAX_TOKEN_VALIDITY_PERIOD = Duration.ofHours(11);
     private static final Duration MIN_TOKEN_VALIDITY_PERIOD = Duration.ofMinutes(5);
@@ -78,43 +71,16 @@ public class YarnRenewableCredentialsFactory implements CredentialsFactory {
     }
 
     @Override
-    public CompletionStage<Credentials> tokens(RemoteJvmOptions options, Collection<UploadedEntry> entries) {
-        Set<FsKey> keys = entries.stream().map(FsKey::keyFor).collect(Collectors.toSet());
-        List<CredentialsHolder> holders = new ArrayList<>(keys.size());
-        for (FsKey key : keys) {
-            holders.add(credentialsCache.computeIfAbsent(key, CredentialsHolder::new));
-        }
-        try {
-            List<CompletableFuture<Credentials>> allCredentials = new ArrayList<>(holders.size());
-            for (CredentialsHolder holder : holders) {
-                CompletableFuture<Credentials> future = holder.getCredentialsOptimistic()
-                        .map(CompletableFuture::completedFuture)
-                        .orElseGet(() -> CompletableFuture.supplyAsync(holder::getOrCreateCredentials, executor));
-                allCredentials.add(future);
-            }
-            return combine(allCredentials);
-        } catch (Exception e) {
-            throw new BriareusException("Can't acquire delegation tokens", e);
-        }
+    protected CompletableFuture<Credentials> tokens(@NotNull FsKey fsKey) {
+        CredentialsHolder holder = credentialsCache.computeIfAbsent(fsKey, CredentialsHolder::new);
+        return holder.getCredentialsOptimistic()
+                .map(CompletableFuture::completedFuture)
+                .orElseGet(() -> CompletableFuture.supplyAsync(holder::getOrCreateCredentials, executor));
     }
 
     @Override
     public void close() {
         executor.shutdown();
-    }
-
-    private static CompletableFuture<Credentials> combine(List<CompletableFuture<Credentials>> credentials) {
-        if (credentials.isEmpty()) {
-            return completedFuture(new Credentials());
-        } else if (credentials.size() == 1) {
-            return credentials.get(0).thenApply(Credentials::new);
-        }
-        return CompletableFuture.allOf(credentials.toArray(new CompletableFuture<?>[0]))
-                .thenApply(any -> {
-                    Credentials combined = new Credentials();
-                    credentials.stream().map(CompletableFuture::join).forEach(combined::addAll);
-                    return combined;
-                });
     }
 
     private class CredentialsHolder {
@@ -176,7 +142,7 @@ public class YarnRenewableCredentialsFactory implements CredentialsFactory {
             Instant validToLowerBound = now.plus(MIN_TOKEN_VALIDITY_PERIOD);
             Instant validToUpperBound = now.plus(MAX_TOKEN_VALIDITY_PERIOD);
             validTo = newTokens.getAllTokens().stream()
-                    .map(this::tokenMaxExpirationTime)
+                    .map(YarnRenewableCredentialsFactory.this::tokenMaxExpirationTime)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .min(Comparator.naturalOrder())
@@ -185,21 +151,6 @@ public class YarnRenewableCredentialsFactory implements CredentialsFactory {
                     .orElse(validToUpperBound);
             credentials = newTokens;
             log.info("Created new tokens for {}. Cached till {}", fsKey, validTo);
-        }
-
-        private Optional<Instant> tokenMaxExpirationTime(Token<? extends TokenIdentifier> token) {
-            try {
-                TokenIdentifier identifier = token.decodeIdentifier();
-                if (identifier instanceof AbstractDelegationTokenIdentifier) {
-                    long timestamp = ((AbstractDelegationTokenIdentifier) identifier).getMaxDate();
-                    return Optional.of(Instant.ofEpochMilli(timestamp));
-                }
-                log.info("Delegation token of kind {} is not instance of {} but {}",
-                        token.getKind(), AbstractDelegationTokenIdentifier.class, token.getClass());
-            } catch (Exception e) {
-                log.warn("Can't decode identifier for token of kind: {}", token.getKind(), e);
-            }
-            return Optional.empty();
         }
 
         private Instant boundToRange(Instant value, Instant lowerBound, Instant upperBound) {
@@ -214,54 +165,6 @@ public class YarnRenewableCredentialsFactory implements CredentialsFactory {
 
         private boolean isValid() {
             return clock.instant().isBefore(validTo);
-        }
-    }
-
-    private static class FsKey {
-        private final String scheme;
-        private final String userInfo;
-        private final String host;
-        private final int port;
-
-        private static FsKey keyFor(UploadedEntry entry) {
-            return new FsKey(entry.resource().getResource());
-        }
-
-        private FsKey(org.apache.hadoop.yarn.api.records.URL resource) {
-            this.scheme = resource.getScheme();
-            this.userInfo = resource.getUserInfo();
-            this.host = resource.getHost();
-            this.port = resource.getPort();
-        }
-
-        private URI toFsUri() throws URISyntaxException {
-            return new URI(scheme, userInfo, host, port, null, null, null);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            FsKey that = (FsKey) o;
-            return port == that.port &&
-                    Objects.equals(scheme, that.scheme) &&
-                    Objects.equals(userInfo, that.userInfo) &&
-                    Objects.equals(host, that.host);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(scheme, userInfo, host, port);
-        }
-
-        @Override
-        public String toString() {
-            return "Filesystem Key {" +
-                    "scheme='" + scheme + '\'' +
-                    ", userInfo='" + (userInfo == null ? "<null>" : "<*****>") + '\'' +
-                    ", host='" + host + '\'' +
-                    ", port=" + port +
-                    '}';
         }
     }
 }
