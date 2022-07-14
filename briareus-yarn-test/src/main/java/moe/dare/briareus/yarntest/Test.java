@@ -10,6 +10,7 @@ import moe.dare.briareus.yarn.CommonOpts;
 import moe.dare.briareus.yarn.HdfsFileSource;
 import moe.dare.briareus.yarn.launch.DefaultLaunchContextFactory;
 import moe.dare.briareus.yarn.launch.command.LaunchCommandFactory;
+import moe.dare.briareus.yarn.launch.credentials.UserRenewableCredentialsFactory;
 import moe.dare.briareus.yarn.launch.credentials.YarnRenewableCredentialsFactory;
 import moe.dare.briareus.yarn.launch.files.FileUploadTool;
 import moe.dare.briareus.yarn.sensei.ApplicationStatus;
@@ -25,6 +26,10 @@ import org.apache.hadoop.security.UserGroupInformation;
 
 import java.net.MalformedURLException;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.OptionalInt;
 import java.util.UUID;
@@ -39,7 +44,8 @@ import static java.util.Collections.singletonList;
 
 public class Test {
     private static final String SENSEI = "sensei";
-    private static final String CONTAINER = "container";
+    private static final String CONTAINER_FOO = "container_foo";
+    private static final String CONTAINER_BAR = "container_bar";
     private static final java.nio.file.Path JAR_PATH = Paths.get(Test.class.getProtectionDomain().getCodeSource().getLocation().getPath());
     private static final String JAR_NAME = "Test.jar";
     private static final Configuration conf;
@@ -77,9 +83,14 @@ public class Test {
         } else if (args[0].equals(SENSEI)) {
             sensei(conf);
             dir.getFileSystem(conf).delete(dir, true);
-        } else if (args[0].equals(CONTAINER)) {
-            System.out.println("HELLO FROM CONTAINER!");
-            Thread.sleep(5000);
+        } else if (args[0].equals(CONTAINER_FOO)) {
+            Instant start = Instant.now();
+            while (Duration.between(start, Instant.now()).compareTo(Duration.ofDays(8)) < 0) {
+                System.out.println(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + " HELLO FROM CONTAINER FOO!");
+                Thread.sleep(30 * 60 * 1000);
+            }
+        } else if (args[0].equals(CONTAINER_BAR)) {
+            System.out.println("HELLO FROM CONTAINER BAR!");
         }
     }
 
@@ -122,7 +133,7 @@ public class Test {
              BriareusYarnSenseiContext ctxt = BriareusYarnSenseiContextBuilder.newBuilder()
                      .launchContextFactory(DefaultLaunchContextFactory.newBuilder()
                              .fileUploadTool(fileUploadTool)
-                             .credentialsFactory(YarnRenewableCredentialsFactory.create(user, conf))
+                             .credentialsFactory(UserRenewableCredentialsFactory.create(user, conf))
                              .launchCommandFactory(LaunchCommandFactory.createDefault(curuser, conf))
                              .build())
                      .shutdownRequestHandler(() -> {
@@ -133,16 +144,23 @@ public class Test {
                      .configuration(conf)
                      .build()) {
             try {
-                final RemoteJvmOptions build = RemoteJvmOptions.newBuilder()
+                final RemoteJvmOptions fooOpts = RemoteJvmOptions.newBuilder()
                         .maxHeapSize(128L * 1024 * 1024)
                         .addFiles(Arrays.asList(JAR, JRE))
-                        .addEnvironment("JAVA_HOME", "./JRE/")
+                        //.addEnvironment("JAVA_HOME", "./JRE/")
                         .setClasspath(singletonList(JAR_NAME))
                         .mainClass(Test.class.getName())
-                        .setArguments(singletonList(CONTAINER))
+                        .setArguments(singletonList(CONTAINER_FOO))
                         .build();
-                RemoteJvmProcess process = ctxt.start(build).toCompletableFuture().join();
-                process.onExit().toCompletableFuture().join();
+                final RemoteJvmOptions barOpts = fooOpts.toBuilder()
+                        .setArguments(singletonList(CONTAINER_BAR))
+                        .build();
+                RemoteJvmProcess process = ctxt.start(fooOpts).toCompletableFuture().join();
+                CompletableFuture<RemoteJvmProcess> fooEnd = process.onExit().toCompletableFuture();
+                while (!fooEnd.isDone()) {
+                    ctxt.start(barOpts);
+                    Thread.sleep(20 * 60 * 1000);
+                }
                 OptionalInt exitCode = process.exitCode();
                 System.out.println("Container exit code: " + exitCode);
                 if (!exitCode.isPresent() || exitCode.getAsInt() != 0) {
