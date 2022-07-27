@@ -15,8 +15,6 @@ class AsyncCallsCache<T, U> {
     private final RefEqualsWrap<U> dummy = new RefEqualsWrap<>(CompletableFutures
             .failedCompletableFuture(new AssertionError("Helper Completable future must not be queried")));
 
-    AsyncCallsCache() {}
-
     public CompletableFuture<U> callOrCache(@NotNull T arg, @NotNull Function<T, CompletableFuture<U>> call) {
         requireNonNull(arg);
         requireNonNull(call);
@@ -31,8 +29,12 @@ class AsyncCallsCache<T, U> {
         }
         RefEqualsWrap<U> newRef = new RefEqualsWrap<>(newFuture);
         cache.putIfAbsent(arg, newRef);
-        newFuture.whenComplete((anyResult, anyError) -> cache.remove(arg, cachedRef));
+        newFuture.whenComplete((anyResult, anyError) -> cache.remove(arg, newRef));
         return newFuture;
+    }
+
+    int inFlightCalls() {
+        return cache.size();
     }
 
     private static final class RefEqualsWrap<T> {
