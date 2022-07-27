@@ -87,7 +87,7 @@ Runnable shutdownRequestHandler = () -> {
 };
 
 try (FileUploadTool fileUploadTool = FileUploadTool.createDefault(userSupplier, conf, hdfsUploadDir, ioPool);
-     CredentialsFactory credentialsFactory = YarnRenewableCredentialsFactory.create(userSupplier, conf);
+     CredentialsFactory credentialsFactory = UserRenewableCredentialsFactory.create(userSupplier, conf);
      LaunchCommandFactory launchCommandFactory = LaunchCommandFactory.createDefault(user, conf);
      BriareusYarnSenseiContext ctxt = BriareusYarnSenseiContextBuilder.newBuilder()
              .launchContextFactory(DefaultLaunchContextFactory.newBuilder()
