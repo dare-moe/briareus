@@ -28,6 +28,7 @@ class DefaultCommandFactory implements LaunchCommandFactory {
     private static final List<FileEntry> ADDITIONAL_RESOURCES = Collections.singletonList(START_SCRIPT_ENTRY);
     private static final JvmArgsFactory ARGS_FACTORY = JvmArgsFactory.LINUX;
     private static final String HADOOP_USER_NAME_ENV_VAR = "HADOOP_USER_NAME";
+    private static final String BRIAREUS_LOGS_DIR_ENV_VAR = "BRIAREUS_LOGS_DIR";
     private final String userName;
     private final Configuration conf;
 
@@ -42,7 +43,7 @@ class DefaultCommandFactory implements LaunchCommandFactory {
 
     @Override
     public LaunchOptions createLaunchOptions(RemoteJvmOptions jvmOptions) {
-        Map<String, String> environment = new LinkedHashMap<>(jvmOptions.environmentOverrides());
+        Map<String, String> environment = createEnvironment(jvmOptions);
         if (SecurityUtil.getAuthenticationMethod(conf) == AuthenticationMethod.SIMPLE &&
                 !environment.containsKey(HADOOP_USER_NAME_ENV_VAR)) {
             log.debug("Setting {} environment variable for simple auth to '{}'", HADOOP_USER_NAME_ENV_VAR, userName);
@@ -50,6 +51,12 @@ class DefaultCommandFactory implements LaunchCommandFactory {
         }
         List<String> command = createCommand(jvmOptions);
         return LaunchOptions.create(ADDITIONAL_RESOURCES, environment, command);
+    }
+
+    private Map<String, String> createEnvironment(RemoteJvmOptions jvmOptions) {
+        LinkedHashMap<String, String> env = new LinkedHashMap<>(jvmOptions.environmentOverrides());
+        env.putIfAbsent(BRIAREUS_LOGS_DIR_ENV_VAR, ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+        return env;
     }
 
     private List<String> createCommand(RemoteJvmOptions jvmOptions) {

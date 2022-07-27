@@ -21,6 +21,10 @@ if ! log_info "Using provided file descriptor for logging" 2>/dev/null ; then
   log_info "Redirected script log to stderr"
 fi
 
+if [[ -n "${BRIAREUS_LOGS_DIR:-}" && -n "${BRIAREUS_LINK_LOGS_DIR:-}" ]]; then
+  ln -s "${BRIAREUS_LOGS_DIR}" "${BRIAREUS_LINK_LOGS_DIR}"
+fi
+
 declare -a java_args
 
 if [[ "${BRIAREUS_LAUNCHER_CREATE_TEMP:-1}" != "0" ]]; then
@@ -36,16 +40,6 @@ if [[ "${BRIAREUS_LAUNCHER_CREATE_TEMP:-1}" != "0" ]]; then
     export TMP="${TMPDIR}"
     java_args+=("-Djava.io.tmpdir=${TMPDIR}")
   fi
-fi
-
-declare -a log_dirs_array=()
-IFS="," read -r -a log_dirs_array <<< "${LOG_DIRS:-}"
-if (( ${#log_dirs_array[@]} == 0 )); then
-  log_warn "LOG_DIRS environment variable is empty. Will not set BRIAREUS_LOGS_DIR"
-else
-  BRIAREUS_LOGS_DIR="${log_dirs_array[ ${RANDOM:-} % ${#log_dirs_array[@]}]}"
-  export BRIAREUS_LOGS_DIR
-  log_info "BRIAREUS_LOGS_DIR=${BRIAREUS_LOGS_DIR}"
 fi
 
 if [[ -n "${JAVA_HOME:-}" ]]; then
