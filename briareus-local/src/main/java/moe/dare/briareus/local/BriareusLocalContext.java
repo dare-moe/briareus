@@ -6,8 +6,8 @@ import moe.dare.briareus.api.RemoteJvmOptions;
 import moe.dare.briareus.api.RemoteJvmProcess;
 import moe.dare.briareus.common.concurrent.CancelToken;
 import moe.dare.briareus.common.concurrent.CancelTokenSource;
-import moe.dare.briareus.common.concurrent.TokenCanceledException;
 import moe.dare.briareus.common.concurrent.CompletableFutures;
+import moe.dare.briareus.common.concurrent.TokenCanceledException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,7 +143,7 @@ class BriareusLocalContext implements BriareusContext<RemoteJvmProcess> {
     }
 
     private RemoteJvmProcess toRemoteProcess(State state) {
-        return new LocalJvmProcess(state.process, state.terminateFuture);
+        return LocalJvmProcess.create(state.process, state.terminateFuture);
     }
 
     public void cleanupResources(State state) {

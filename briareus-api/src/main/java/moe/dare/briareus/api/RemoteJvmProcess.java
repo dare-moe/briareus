@@ -42,4 +42,9 @@ public interface RemoteJvmProcess {
      * @return CompleteionStage
      */
     CompletionStage<RemoteJvmProcess> onExit();
+
+    /**
+     * @return external id of this process
+     */
+    Object getExternalId();
 }

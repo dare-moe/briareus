@@ -49,4 +49,9 @@ final class YarnContainerJvmProcess implements RemoteJvmProcess {
     public CompletionStage<RemoteJvmProcess> onExit() {
         return exitCode.thenApply(any -> this);
     }
+
+    @Override
+    public Object getExternalId() {
+        return containerId;
+    }
 }
