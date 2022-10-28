@@ -62,14 +62,14 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
                                   LaunchContextFactory launchContextFactory,
                                   ResourceFactory resourceFactory,
                                   Runnable shutdownRequestHandler,
-                                  AMRMClientFactory AMRMClientFactory) {
+                                  AMRMClientFactory amrmClientFactory) {
         this.user = requireNonNull(user, "user");
         this.launchContextFactory = requireNonNull(launchContextFactory, "launchContextFactory");
         this.resourceFactory = requireNonNull(resourceFactory, "resourceFactory");
         this.shutdownRequestHandler = requireNonNull(shutdownRequestHandler, "shutdownRequestHandler");
         NMTokenCache nmTokenCache = new NMTokenCache(); // get rid of NMTokenCache singleton
         NMCallbackHandler nmCallback = new NMCallbackHandler(startingContainers);
-        amrmClient = ofNullable(AMRMClientFactory)
+        amrmClient = ofNullable(amrmClientFactory)
                 .map(f -> f.armrClient(user))
                 .orElseGet(() -> user.doAs((PrivilegedAction<AMRMClient<ContainerRequest>>)AMRMClient::createAMRMClient));
         nmClientAsync = user.doAs((PrivilegedAction<NMClientAsync>)() -> NMClientAsync.createNMClientAsync(nmCallback));
