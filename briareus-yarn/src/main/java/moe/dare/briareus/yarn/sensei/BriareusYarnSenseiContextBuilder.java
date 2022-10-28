@@ -42,6 +42,7 @@ import static moe.dare.briareus.common.utils.Preconditions.checkState;
  *     <li>host</li>
  *     <li>port</li>
  *     <li>trackingUrl</li>
+ *     <li>amrmClientFactory</li>
  * </ul>
  */
 public class BriareusYarnSenseiContextBuilder {
@@ -56,6 +57,7 @@ public class BriareusYarnSenseiContextBuilder {
     private String host;
     private int port = NO_RPC_PORT;
     private String trackingUrl;
+    private AMRMClientFactory amrmClientFactory;
 
     public static BriareusYarnSenseiContextBuilder newBuilder() {
         return new BriareusYarnSenseiContextBuilder();
@@ -156,6 +158,17 @@ public class BriareusYarnSenseiContextBuilder {
         return this;
     }
 
+    /**
+     * Optional property.
+     *
+     * @param amrmClientFactory AMRMClientFactory instance
+     * @return this instance for chaining
+     */
+    public BriareusYarnSenseiContextBuilder resourceFactory(AMRMClientFactory amrmClientFactory) {
+        this.amrmClientFactory = requireNonNull(amrmClientFactory, "amrmClientFactory");
+        return this;
+    }
+
     public BriareusYarnSenseiContext build() {
         checkState(configuration != null, "configuration not set");
         checkState(launchContextFactory != null, "launch context factory not set");
@@ -168,7 +181,8 @@ public class BriareusYarnSenseiContextBuilder {
                 userOrDefault,
                 launchContextFactory,
                 resourceFactoryOrDefault,
-                shutdownRequestHandlerOrDefault);
+                shutdownRequestHandlerOrDefault,
+                amrmClientFactory);
         context.startContext(configuration, hostOrDefault, port, trackingUrl);
         return context;
     }

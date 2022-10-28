@@ -22,6 +22,7 @@ import static moe.dare.briareus.common.utils.Preconditions.checkState;
  * <br>Optional parameters:
  * <ul>
  *     <li>resourceFactory</li>
+ *     <li>yarnClientFactory</li>
  * </ul>
  */
 public class BriareusYarnShodanContextBuilder {
@@ -29,6 +30,7 @@ public class BriareusYarnShodanContextBuilder {
     private LaunchContextFactory launchContextFactory;
     private ResourceFactory resourceFactory;
     private Configuration configuration;
+    private YarnClientFactory yarnClientFactory;
 
     public static BriareusYarnShodanContextBuilder newBuilder() {
         return new BriareusYarnShodanContextBuilder();
@@ -81,12 +83,23 @@ public class BriareusYarnShodanContextBuilder {
         return this;
     }
 
+    /**
+     * Optional property.
+     *
+     * @param yarnClientFactory YarnClientFactory instance
+     * @return this instance for chaining
+     */
+    public BriareusYarnShodanContextBuilder yarnClientFactory(YarnClientFactory yarnClientFactory) {
+        this.yarnClientFactory = Objects.requireNonNull(yarnClientFactory, "yarnClientFactory");
+        return this;
+    }
+
     public BriareusYarnShodanContext build() {
         checkState(user != null, "user not set");
         checkState(configuration != null, "configuration not set");
         checkState(launchContextFactory != null, "launch context factory not set");
         ResourceFactory resourceFactoryOrDefault = ofNullable(resourceFactory).orElseGet(ResourceFactory::createDefault);
-        UgiYarnClient client = new UgiYarnClient(user);
+        UgiYarnClient client = new UgiYarnClient(user, yarnClientFactory);
         client.start(configuration);
         try {
             return new BriareusYarnShodanContextImpl(client, launchContextFactory, resourceFactoryOrDefault);

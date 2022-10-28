@@ -15,12 +15,16 @@ import java.security.PrivilegedAction;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 
 class UgiYarnClient {
-    private final YarnClient client = YarnClient.createYarnClient();
+    private final YarnClient client;
     private final Supplier<UserGroupInformation> ugi;
 
-    UgiYarnClient(Supplier<UserGroupInformation> ugi) {
+    UgiYarnClient(Supplier<UserGroupInformation> ugi, YarnClientFactory yarnClientFactory) {
+        client = ofNullable(yarnClientFactory)
+                .map(YarnClientFactory::yarnClient)
+                .orElseGet(() -> YarnClient.createYarnClient());
         this.ugi = requireNonNull(ugi, "ugi");
     }
 
