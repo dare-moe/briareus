@@ -29,13 +29,15 @@ class BriareusYarnShodanContextImpl implements BriareusYarnShodanContext {
     private final ResourceFactory resourceFactory;
     private final UgiYarnClient client;
     private final AppStatusMonitor appStatusMonitor;
+    private final String nodeListExpression;
     private volatile boolean closed;
 
-    public BriareusYarnShodanContextImpl(UgiYarnClient client, LaunchContextFactory launchContextFactory, ResourceFactory resourceFactory) {
+    public BriareusYarnShodanContextImpl(UgiYarnClient client, LaunchContextFactory launchContextFactory, ResourceFactory resourceFactory, String nodeListExpression) {
         this.client = client;
         this.launchContextFactory = launchContextFactory;
         this.resourceFactory = resourceFactory;
         this.appStatusMonitor = new AppStatusMonitor(client);
+        this.nodeListExpression = nodeListExpression;
     }
 
     @Override
@@ -64,6 +66,7 @@ class BriareusYarnShodanContextImpl implements BriareusYarnShodanContext {
         senseiContext.setQueue(yarnQueue(options));
         senseiContext.setPriority(applicationPriority(options));
         senseiContext.setUnmanagedAM(false);
+        senseiContext.setNodeLabelExpression(nodeListExpression);
         ApplicationId applicationId = client.submitApplication(senseiContext);
         CompletableFuture<FinalApplicationStatus> statusFuture = appStatusMonitor.monitorApplication(applicationId);
         return new YarnSenseiJvmProcessImpl(applicationId, client, statusFuture);

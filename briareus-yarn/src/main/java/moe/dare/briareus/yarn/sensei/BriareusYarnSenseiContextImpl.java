@@ -51,6 +51,7 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
     private final LaunchContextFactory launchContextFactory;
     private final ResourceFactory resourceFactory;
     private final Runnable shutdownRequestHandler;
+    private final ContainerRequestOptions containerRequestOptions;
 
     private volatile ApplicationStatus finalStatus = ApplicationStatus.succeeded();
     private volatile Resource maximumResourceCapability;
@@ -60,11 +61,12 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
     BriareusYarnSenseiContextImpl(UserGroupInformation user,
                                   LaunchContextFactory launchContextFactory,
                                   ResourceFactory resourceFactory,
-                                  Runnable shutdownRequestHandler) {
+                                  Runnable shutdownRequestHandler, ContainerRequestOptions containerRequestOptions) {
         this.user = requireNonNull(user, "user");
         this.launchContextFactory = requireNonNull(launchContextFactory, "launchContextFactory");
         this.resourceFactory = requireNonNull(resourceFactory, "resourceFactory");
         this.shutdownRequestHandler = requireNonNull(shutdownRequestHandler, "shutdownRequestHandler");
+        this.containerRequestOptions = containerRequestOptions;
         NMTokenCache nmTokenCache = new NMTokenCache(); // get rid of NMTokenCache singleton
         NMCallbackHandler nmCallback = new NMCallbackHandler(startingContainers);
         amrmClient = user.doAs((PrivilegedAction<AMRMClient<ContainerRequest>>)AMRMClient::createAMRMClient);
@@ -106,7 +108,7 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
     public CompletionStage<RemoteJvmProcess> start(RemoteJvmOptions options) {
         ensureNotClosed();
         verifyOptions(options);
-        ContainerRequest request = createRequest(options);
+        ContainerRequest request = createRequest(options, containerRequestOptions);
         CompletionStage<ContainerLaunchContext> launchContextFuture = launchContextFactory.create(options);
         CompletableFuture<Container> containerFuture = allocateContainer(request);
         return launchContextFuture.handle(Either::oneOfNullable).thenCombine(containerFuture, (context, container) -> {
@@ -123,13 +125,17 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
         requireNonNull(options);
     }
 
-    private ContainerRequest createRequest(RemoteJvmOptions options) {
+    private ContainerRequest createRequest(RemoteJvmOptions options, ContainerRequestOptions containerRequestOptions) {
         int requestNumber = requestCounter.updateAndGet(x -> Math.max(x + 1, 1));
         Resource resources = resourceFactory.resources(options, maximumResourceCapability);
         return ContainerRequest.newBuilder()
                 .allocationRequestId(requestNumber)
                 .executionTypeRequest(GUARANTEED_EXECUTION_TYPE)
                 .capability(resources)
+                .nodes(containerRequestOptions.getNodes())
+                .racks(containerRequestOptions.getRacks())
+                .relaxLocality(containerRequestOptions.getRelaxLocality())
+                .nodeLabelsExpression(containerRequestOptions.getNodeLabelsExpression())
                 .priority(Priority.newInstance(requestNumber))
                 .build();
     }
@@ -294,3 +300,4 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
         }
     }
 }
+

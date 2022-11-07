@@ -15,13 +15,13 @@ import static moe.dare.briareus.common.utils.Preconditions.checkState;
  * Builder for BriareusYarnShodanContextBuilder.
  * <br>Required parameters:
  * <ul>
- *     <li>user</li>
- *     <li>configuration</li>
- *     <li>launchContextFactory</li>
+ * <li>user</li>
+ * <li>configuration</li>
+ * <li>launchContextFactory</li>
  * </ul>
  * <br>Optional parameters:
  * <ul>
- *     <li>resourceFactory</li>
+ * <li>resourceFactory</li>
  * </ul>
  */
 public class BriareusYarnShodanContextBuilder {
@@ -29,6 +29,7 @@ public class BriareusYarnShodanContextBuilder {
     private LaunchContextFactory launchContextFactory;
     private ResourceFactory resourceFactory;
     private Configuration configuration;
+    private String nodeLabelExpression;
 
     public static BriareusYarnShodanContextBuilder newBuilder() {
         return new BriareusYarnShodanContextBuilder();
@@ -81,6 +82,17 @@ public class BriareusYarnShodanContextBuilder {
         return this;
     }
 
+    /**
+     * Optional property.
+     *
+     * @param nodeLabelExpression node-label-expression of this app (See {@link org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext#setNodeLabelExpression(String)})
+     * @return this instance for chaining
+     */
+    public BriareusYarnShodanContextBuilder nodeListExpression(String nodeLabelExpression) {
+        this.nodeLabelExpression = nodeLabelExpression;
+        return this;
+    }
+
     public BriareusYarnShodanContext build() {
         checkState(user != null, "user not set");
         checkState(configuration != null, "configuration not set");
@@ -89,7 +101,7 @@ public class BriareusYarnShodanContextBuilder {
         UgiYarnClient client = new UgiYarnClient(user);
         client.start(configuration);
         try {
-            return new BriareusYarnShodanContextImpl(client, launchContextFactory, resourceFactoryOrDefault);
+            return new BriareusYarnShodanContextImpl(client, launchContextFactory, resourceFactoryOrDefault, nodeLabelExpression);
         } catch (Exception e) {
             try {
                 client.stop();
