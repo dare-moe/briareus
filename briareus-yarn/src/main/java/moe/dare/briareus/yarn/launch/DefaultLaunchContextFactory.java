@@ -12,6 +12,7 @@ import moe.dare.briareus.yarn.launch.files.UploadedEntry;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.yarn.api.records.ApplicationAccessType;
 import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
+import org.apache.hadoop.yarn.api.records.ContainerRetryContext;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 
 import java.io.ByteArrayOutputStream;
@@ -42,6 +43,7 @@ public class DefaultLaunchContextFactory implements LaunchContextFactory {
     private final CredentialsFactory credentialsFactory;
     private final ServiceDataProvider serviceDataProvider;
     private final ApplicationAclProvider aclProvider;
+    private final ContainerRetryContext containerRetryContext;
 
     /**
      * @return new builder for DefaultLaunchContextFactory
@@ -56,6 +58,7 @@ public class DefaultLaunchContextFactory implements LaunchContextFactory {
         this.launchCommandFactory = requireNonNull(builder.launchCommandFactory, "LaunchCommandFactory");
         this.serviceDataProvider = ofNullable(builder.serviceDataProvider).orElseGet(ServiceDataProvider::createDefault);
         this.aclProvider = ofNullable(builder.aclProvider).orElseGet(ApplicationAclProvider::createDefault);
+        this.containerRetryContext = builder.containerRetryContext;
     }
 
     @Override
@@ -73,7 +76,8 @@ public class DefaultLaunchContextFactory implements LaunchContextFactory {
                 launchOptions.command(),
                 serviceData,
                 tokenStorageBytes(credentials),
-                acls));
+                acls,
+                containerRetryContext));
     }
 
     private void verifyOptions(RemoteJvmOptions options) {
@@ -122,6 +126,7 @@ public class DefaultLaunchContextFactory implements LaunchContextFactory {
         private LaunchCommandFactory launchCommandFactory;
         private ServiceDataProvider serviceDataProvider;
         private ApplicationAclProvider aclProvider;
+        private ContainerRetryContext containerRetryContext;
 
         private Builder() {
         }
@@ -180,6 +185,19 @@ public class DefaultLaunchContextFactory implements LaunchContextFactory {
             this.aclProvider = requireNonNull(aclProvider, "aclProvider");
             return this;
         }
+
+        /**
+         * Optional parameter
+         * see @link org.apache.hadoop.yarn.api.records.ContainerRetryContext
+         *
+         * @param containerRetryContext ContainerRetryContext instance
+         * @return this builder for chaining
+         */
+        public Builder containerRetryContext(ContainerRetryContext containerRetryContext) {
+            this.containerRetryContext = requireNonNull(containerRetryContext, "containerRetryContext");
+            return this;
+        }
+
 
         /**
          * @return new LaunchContextFactory
