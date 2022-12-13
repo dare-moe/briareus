@@ -49,7 +49,7 @@ class DefaultCommandFactoryTest {
         LaunchCommandFactory factory = createTestInstance(AuthenticationMethod.SIMPLE);
         LaunchOptions options = factory.createLaunchOptions(newOptions().build());
         validateCommon(options);
-        assertThat(options.environment()).hasSize(1).containsEntry("HADOOP_USER_NAME", TEST_USER_NAME);
+        assertThat(options.environment()).containsEntry("HADOOP_USER_NAME", TEST_USER_NAME);
     }
 
     @Test
@@ -58,7 +58,7 @@ class DefaultCommandFactoryTest {
         LaunchCommandFactory factory = createTestInstance(AuthenticationMethod.KERBEROS);
         LaunchOptions options = factory.createLaunchOptions(newOptions().build());
         validateCommon(options);
-        assertThat(options.environment()).isEmpty();
+        assertThat(options.environment()).doesNotContainKey("HADOOP_USER_NAME");
     }
 
     @Test
@@ -68,7 +68,7 @@ class DefaultCommandFactoryTest {
         RemoteJvmOptions jvmOptions = newOptions().addEnvironment("HADOOP_USER_NAME", "foo").build();
         LaunchOptions options = factory.createLaunchOptions(jvmOptions);
         validateCommon(options);
-        assertThat(options.environment()).hasSize(1).containsEntry("HADOOP_USER_NAME", "foo");
+        assertThat(options.environment()).containsEntry("HADOOP_USER_NAME", "foo");
     }
 
     private void validateCommon(LaunchOptions options) {

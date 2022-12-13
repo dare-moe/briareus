@@ -1,0 +1,54 @@
+plugins {
+    id 'maven-publish'
+    id 'signing'
+}
+
+publishing {
+    repositories {
+        maven {
+            final isReleaseVersion = !version.endsWith("SNAPSHOT")
+            final releaseRepo = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            final snapshotRepo = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = isReleaseVersion ? releaseRepo : snapshotRepo
+            credentials {
+                username = findProperty('ossrhUsername')
+                password = findProperty('ossrhPassword')
+            }
+        }
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                afterEvaluate {
+                    name = project.description
+                    description = project.description
+                }
+                url = 'https://github.com/dare-moe/briareus'
+                scm {
+                    connection = 'scm:git:git://github.com/dare-moe/briareus'
+                    developerConnection = 'scm:git:git://github.com/dare-moe/briareus'
+                    url = 'https://github.com/dare-moe/briareus'
+                }
+                developers {
+                    developer {
+                        id = 'alopukhov'
+                        name = 'Andrei Lopukhov'
+                    }
+                }
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications
+}

@@ -1,87 +1,14 @@
-ext {
-    slf4jVersion = "1.7.30"
-    hadoopVersion = "3.3.0"
-}
-
 subprojects {
-    pluginManager.withPlugin('java') {
-        java {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
-            withJavadocJar()
-            withSourcesJar()
-        }
-
+    repositories {
+        mavenCentral()
+    }
+    pluginManager.withPlugin('briareus.java-conventions') {
         dependencies {
-            compileOnly 'org.jetbrains:annotations:20.1.0'
-            testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0",
-                    "org.assertj:assertj-core:3.18.1",
-                    'org.mockito:mockito-core:3.8.0',
-                    'org.mockito:mockito-junit-jupiter:3.8.0'
-            testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0",
-                    "org.slf4j:slf4j-simple:$slf4jVersion"
-        }
-
-        test {
-            useJUnitPlatform()
-        }
-
-        repositories {
-            mavenCentral()
-        }
-    }
-
-    pluginManager.withPlugin('maven-publish') {
-        publishing {
-            repositories {
-                maven {
-                    final isReleaseVersion = !version.endsWith("SNAPSHOT")
-                    final releaseRepo = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-                    final snapshotRepo = "https://oss.sonatype.org/content/repositories/snapshots/"
-                    url = isReleaseVersion ? releaseRepo : snapshotRepo
-                    credentials {
-                        username = findProperty('ossrhUsername')
-                        password = findProperty('ossrhPassword')
-                    }
-                }
-            }
-
-            publications {
-                mavenJava(MavenPublication) {
-                    from components.java
-                    
-                    pom {
-                        afterEvaluate {
-                            name = project.description
-                            description = project.description
-                        }
-                        url = 'https://github.com/dare-moe/briareus'
-                        scm {
-                            connection = 'scm:git:git://github.com/dare-moe/briareus'
-                            developerConnection = 'scm:git:git://github.com/dare-moe/briareus'
-                            url = 'https://github.com/dare-moe/briareus'
-                        }
-                        developers {
-                            developer {
-                                id = 'alopukhov'
-                                name = 'Andrei Lopukhov'
-                            }
-                        }
-                        licenses {
-                            license {
-                                name = 'The Apache License, Version 2.0'
-                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    pluginManager.withPlugin('signing') {
-        signing {
-            sign publishing.publications
+            testImplementation platform(libs.platform.junit)
+            testImplementation platform(libs.platform.mockito)
+            compileOnly libs.jetbrains.annotations
+            testImplementation libs.bundles.testImplementation
+            testRuntimeOnly libs.bundles.testRuntime
         }
     }
 }
