@@ -77,11 +77,13 @@ final class NMCallbackHandler extends NMClientAsync.AbstractCallbackHandler {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onContainerResourceIncreased(ContainerId containerId, Resource resource) {
         log.warn("Unexpected container resource increased event. Container: {}. Resource: {}", containerId, resource);
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onIncreaseContainerResourceError(ContainerId containerId, Throwable t) {
         log.warn("Unexpected container resource increased error event. Container: {}.", containerId, t);
     }

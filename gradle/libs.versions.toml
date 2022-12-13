@@ -1,0 +1,36 @@
+[versions]
+junit = "5.9.1"
+mockito = "4.9.0"
+jetbrainsAnnotations = "23.1.0"
+slf4j = "1.7.36"
+logback = "1.3.5"
+assertj = "3.23.1"
+hadoop = "3.3.0"
+
+[libraries]
+platform-junit = { module = "org.junit:junit-bom", version.ref = "junit" }
+platform-mockito = { module = "org.mockito:mockito-bom", version.ref = "mockito" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
+mockito-core = { module = "org.mockito:mockito-core" }
+mockito-junit = { module = "org.mockito:mockito-junit-jupiter" }
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrainsAnnotations" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+slf4j-jclOverSlf4j = { module = "org.slf4j:jcl-over-slf4j", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+hadoop-common = { module = "org.apache.hadoop:hadoop-common", version.ref = "hadoop" }
+hadoop-yarnClient = { module = "org.apache.hadoop:hadoop-yarn-client", version.ref = "hadoop" }
+
+[bundles]
+testImplementation = [
+    "junit-jupiter-api",
+    "mockito-core",
+    "mockito-junit",
+    "mockito-core",
+    "assertj"]
+testRuntime = ["junit-jupiter-engine", "logback-classic"]
+
+[plugins]
+shadow = { id = "com.github.johnrengelman.shadow", version = "6.1.0" }
