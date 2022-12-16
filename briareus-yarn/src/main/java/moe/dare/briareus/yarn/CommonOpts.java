@@ -29,7 +29,7 @@ public class CommonOpts {
             try {
                 constraint.validate(value);
             } catch (ConstraintValidationException e) {
-                throw new IllegalArgumentException("Bad value [" + value + "] for " + toString(), e);
+                throw new IllegalArgumentException("Bad value [" + value + "] for " + name(), e);
             }
         }
 
@@ -53,7 +53,7 @@ public class CommonOpts {
             try {
                 constraint.validate(value);
             } catch (ConstraintValidationException e) {
-                throw new IllegalArgumentException("Bad value [" + value + "] for " + toString(), e);
+                throw new IllegalArgumentException("Bad value [" + value + "] for " + name(), e);
             }
         }
 

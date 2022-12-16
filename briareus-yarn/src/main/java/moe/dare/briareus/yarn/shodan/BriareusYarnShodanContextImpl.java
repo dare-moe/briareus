@@ -64,6 +64,8 @@ class BriareusYarnShodanContextImpl implements BriareusYarnShodanContext {
         senseiContext.setQueue(yarnQueue(options));
         senseiContext.setPriority(applicationPriority(options));
         senseiContext.setUnmanagedAM(false);
+        options.getOpt(ShodanOpts.YARN_APPLICATION_NODE_LABEL_EXPRESSION)
+                .ifPresent(senseiContext::setNodeLabelExpression);
         ApplicationId applicationId = client.submitApplication(senseiContext);
         CompletableFuture<FinalApplicationStatus> statusFuture = appStatusMonitor.monitorApplication(applicationId);
         return new YarnSenseiJvmProcessImpl(applicationId, client, statusFuture);
