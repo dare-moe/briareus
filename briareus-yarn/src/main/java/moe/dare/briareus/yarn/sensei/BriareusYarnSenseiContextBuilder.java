@@ -1,6 +1,7 @@
 package moe.dare.briareus.yarn.sensei;
 
 import moe.dare.briareus.api.BriareusException;
+import moe.dare.briareus.api.ContainerRequestOptions;
 import moe.dare.briareus.yarn.launch.LaunchContextFactory;
 import moe.dare.briareus.yarn.reousrces.ResourceFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -31,17 +32,17 @@ import static moe.dare.briareus.common.utils.Preconditions.checkState;
  * Builder for BriareusYarnSenseiContext.
  * <br>Required parameters:
  * <ul>
- *     <li>configuration</li>
- *     <li>launchContextFactory</li>
+ * <li>configuration</li>
+ * <li>launchContextFactory</li>
  * </ul>
  * <br>Optional parameters:
  * <ul>
- *     <li>user</li>
- *     <li>resourceFactory</li>
- *     <li>shutdownRequestHandler</li>
- *     <li>host</li>
- *     <li>port</li>
- *     <li>trackingUrl</li>
+ * <li>user</li>
+ * <li>resourceFactory</li>
+ * <li>shutdownRequestHandler</li>
+ * <li>host</li>
+ * <li>port</li>
+ * <li>trackingUrl</li>
  * </ul>
  */
 public class BriareusYarnSenseiContextBuilder {
@@ -56,6 +57,7 @@ public class BriareusYarnSenseiContextBuilder {
     private String host;
     private int port = NO_RPC_PORT;
     private String trackingUrl;
+    private ContainerRequestOptions containerRequestOptions;
 
     public static BriareusYarnSenseiContextBuilder newBuilder() {
         return new BriareusYarnSenseiContextBuilder();
@@ -148,6 +150,17 @@ public class BriareusYarnSenseiContextBuilder {
     /**
      * Optional property.
      *
+     * @param containerRequestOptions single container request options
+     * @return this instance for chaining
+     */
+    public BriareusYarnSenseiContextBuilder containerRequestOptions(ContainerRequestOptions containerRequestOptions) {
+        this.containerRequestOptions = requireNonNull(containerRequestOptions, "trackingUrl");
+        return this;
+    }
+
+    /**
+     * Optional property.
+     *
      * @param trackingUrl tracking url to be registered in YARN resource manager.
      * @return this instance for chaining
      */
@@ -164,11 +177,13 @@ public class BriareusYarnSenseiContextBuilder {
         String hostOrDefault = ofNullable(host).orElseGet(this::getDefaultHost);
         Runnable shutdownRequestHandlerOrDefault = ofNullable(shutdownRequestHandler)
                 .orElse(DefaultShutdownRequestHandler.INSTANCE);
+        ContainerRequestOptions containerRequestOptionsOrDefault = ofNullable(containerRequestOptions).orElseGet(() -> ContainerRequestOptions.newBuilder().build());
         BriareusYarnSenseiContextImpl context = new BriareusYarnSenseiContextImpl(
                 userOrDefault,
                 launchContextFactory,
                 resourceFactoryOrDefault,
-                shutdownRequestHandlerOrDefault);
+                shutdownRequestHandlerOrDefault,
+                containerRequestOptionsOrDefault);
         context.startContext(configuration, hostOrDefault, port, trackingUrl);
         return context;
     }
