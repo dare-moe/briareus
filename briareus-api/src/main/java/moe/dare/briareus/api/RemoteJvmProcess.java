@@ -44,7 +44,9 @@ public interface RemoteJvmProcess {
     CompletionStage<RemoteJvmProcess> onExit();
 
     /**
-     * @return external id of this process
+     * Get the external system specific identifier for this process.
+     *
+     * @return external id of this process or null if not available.
      */
     Object getExternalId();
 }
