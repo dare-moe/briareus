@@ -42,6 +42,7 @@ import static moe.dare.briareus.common.utils.Preconditions.checkState;
  *     <li>host</li>
  *     <li>port</li>
  *     <li>trackingUrl</li>
+ *     <li>stopContainersOnClose</li>
  * </ul>
  */
 public class BriareusYarnSenseiContextBuilder {
@@ -56,6 +57,7 @@ public class BriareusYarnSenseiContextBuilder {
     private String host;
     private int port = NO_RPC_PORT;
     private String trackingUrl;
+    private boolean nmClientCleanupContainers = true;
 
     public static BriareusYarnSenseiContextBuilder newBuilder() {
         return new BriareusYarnSenseiContextBuilder();
@@ -156,6 +158,17 @@ public class BriareusYarnSenseiContextBuilder {
         return this;
     }
 
+    /**
+     * Optional property.
+     * If true will <b>proactively</b> stop started containers on context close.
+     *
+     * @return this instance for chaining.
+     */
+    public BriareusYarnSenseiContextBuilder stopContainersOnClose(boolean value) {
+        this.nmClientCleanupContainers = value;
+        return this;
+    }
+
     public BriareusYarnSenseiContext build() {
         checkState(configuration != null, "configuration not set");
         checkState(launchContextFactory != null, "launch context factory not set");
@@ -169,7 +182,7 @@ public class BriareusYarnSenseiContextBuilder {
                 launchContextFactory,
                 resourceFactoryOrDefault,
                 shutdownRequestHandlerOrDefault);
-        context.startContext(configuration, hostOrDefault, port, trackingUrl);
+        context.startContext(configuration, hostOrDefault, port, trackingUrl, nmClientCleanupContainers);
         return context;
     }
 

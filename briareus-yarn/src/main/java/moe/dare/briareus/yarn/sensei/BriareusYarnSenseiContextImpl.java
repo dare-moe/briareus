@@ -1,7 +1,10 @@
 package moe.dare.briareus.yarn.sensei;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import moe.dare.briareus.api.*;
+import moe.dare.briareus.api.BriareusException;
+import moe.dare.briareus.api.JvmStartFailedException;
+import moe.dare.briareus.api.RemoteJvmOptions;
+import moe.dare.briareus.api.RemoteJvmProcess;
 import moe.dare.briareus.common.concurrent.ThreadFactoryBuilder;
 import moe.dare.briareus.common.utils.Either;
 import moe.dare.briareus.yarn.launch.LaunchContextFactory;
@@ -73,7 +76,9 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
         nmClientAsync.getClient().setNMTokenCache(nmTokenCache);
     }
 
-    void startContext(Configuration configuration, String host, int port, String url) {
+    void startContext(Configuration configuration,
+                      String host, int port, String url,
+                      boolean nmClientCleanupContainers) {
         requireNonNull(configuration, "configuration");
         requireNonNull(host, "host");
         heartBeat = Executors.newSingleThreadScheduledExecutor(HEARTBEAT_THREAD_FACTORY);
@@ -82,6 +87,7 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
                 amrmClient.init(configuration);
                 amrmClient.start();
                 nmClientAsync.init(configuration);
+                nmClientAsync.getClient().cleanupRunningContainersOnStop(nmClientCleanupContainers);
                 nmClientAsync.start();
                 RegisterApplicationMasterResponse response = amrmClient.registerApplicationMaster(host, port, url);
                 maximumResourceCapability = response.getMaximumResourceCapability();
@@ -146,6 +152,7 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
     private CompletableFuture<RemoteJvmProcess> launchContainer(Container container, ContainerLaunchContext context) {
         final ContainerId containerId = container.getId();
         final NodeId nodeId = container.getNodeId();
+        String failureStartMessage = "Failed to start container container {}. Releasing.";
         try {
             CompletableFuture<Void> startedFuture = new CompletableFuture<>();
             CompletableFuture<Integer> exitCodeFuture = new CompletableFuture<>();
@@ -157,9 +164,18 @@ class BriareusYarnSenseiContextImpl implements BriareusYarnSenseiContext {
                 exitCodeFuture.completeExceptionally(throwable);
                 return null;
             });
+            exitCodeFuture.whenComplete((exitCode, throwable) -> {
+                if (throwable == null) {
+                    log.debug("Requesting node managed {} to stop container {} after completion.", nodeId, containerId);
+                    nmClientAsync.stopContainerAsync(containerId, nodeId);
+                } else {
+                    log.warn(failureStartMessage, containerId, throwable);
+                    amrmClient.releaseAssignedContainer(containerId);
+                }
+            });
             return startedFuture.thenApply(any -> new YarnContainerJvmProcess(nmClientAsync, containerId, nodeId, exitCodeFuture));
         } catch (Exception e) {
-            log.warn("Failed to start container container {}. Releasing.", containerId);
+            log.warn(failureStartMessage, containerId);
             amrmClient.releaseAssignedContainer(containerId);
             throw e;
         }
