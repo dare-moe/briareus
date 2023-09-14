@@ -11,10 +11,13 @@ public class ShodanOpts {
     public static final OptKey<Boolean> KEEP_CONTAINERS_ACROSS_APPLICATION_ATTEMPTS = BooleanOpts.KEEP_CONTAINERS_ACROSS_APPLICATION_ATTEMPTS;
     public static final OptKey<Integer> YARN_APPLICATION_ATTEMPTS = IntOpts.YARN_APPLICATION_ATTEMPTS;
     public static final OptKey<Integer> YARN_APPLICATION_PRIORITY = IntOpts.YARN_APPLICATION_PRIORITY;
+    public static final OptKey<String> YARN_APPLICATION_NODE_LABEL_EXPRESSION =
+            StringOpts.YARN_APPLICATION_NODE_LABEL_EXPRESSION;
 
     private enum StringOpts implements OptKey<String> {
         YARN_QUEUE(Constraints.notEmptyString()),
-        YARN_APPLICATION_NAME(Constraints.notEmptyString());
+        YARN_APPLICATION_NAME(Constraints.notEmptyString()),
+        YARN_APPLICATION_NODE_LABEL_EXPRESSION(Constraints.notEmptyString());
 
         private final Constraint<String> constraint;
 
@@ -28,7 +31,7 @@ public class ShodanOpts {
             try {
                 constraint.validate(value);
             } catch (ConstraintValidationException e) {
-                throw new IllegalArgumentException("Bad value [" + value + "] for " + toString(), e);
+                throw new IllegalArgumentException("Bad value [" + value + "] for " + name(), e);
             }
         }
 
@@ -48,13 +51,12 @@ public class ShodanOpts {
             this.constraint = constraint;
         }
 
-
         @Override
         public void validate(Integer value) {
             try {
                 constraint.validate(value);
             } catch (ConstraintValidationException e) {
-                throw new IllegalArgumentException("Bad value [" + value + "] for " + toString(), e);
+                throw new IllegalArgumentException("Bad value [" + value + "] for " + name(), e);
             }
         }
 
@@ -73,13 +75,12 @@ public class ShodanOpts {
             this.constraint = constraint;
         }
 
-
         @Override
         public void validate(Boolean value) {
             try {
                 constraint.validate(value);
             } catch (ConstraintValidationException e) {
-                throw new IllegalArgumentException("Bad value [" + value + "] for " + toString(), e);
+                throw new IllegalArgumentException("Bad value [" + value + "] for " + name(), e);
             }
         }
 

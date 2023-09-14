@@ -207,6 +207,7 @@ class BriareusLocalContext implements BriareusContext<RemoteJvmProcess> {
                     return FileVisitResult.CONTINUE;
                 }
             });
+            workDirectories.remove(path);
         } catch (Exception e) {
             log.error("Can't clear work dir {}", path, e);
         }
@@ -217,12 +218,12 @@ class BriareusLocalContext implements BriareusContext<RemoteJvmProcess> {
         closeOnCancelTokenSource.cancel();
         while (!runningProcesses.isEmpty()) {
             List<Process> toStop = new ArrayList<>(runningProcesses);
-            runningProcesses.removeAll(toStop);
+            toStop.forEach(runningProcesses::remove);
             toStop.forEach(this::destroyProcess);
         }
         while (!workDirectories.isEmpty()) {
             List<Path> toRemove = new ArrayList<>(workDirectories);
-            workDirectories.removeAll(toRemove);
+            toRemove.forEach(workDirectories::remove);
             toRemove.forEach(this::deleteWorkDirectoryQuietly);
         }
     }

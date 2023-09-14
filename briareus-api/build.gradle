@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
-    id 'maven-publish'
-    id 'signing'
+    id 'briareus.java-conventions'
+    id 'briareus.publish'
 }
 
 description = "Briareus API"
