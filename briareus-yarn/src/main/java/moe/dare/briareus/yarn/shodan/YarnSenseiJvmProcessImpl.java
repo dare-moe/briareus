@@ -53,4 +53,9 @@ class YarnSenseiJvmProcessImpl implements YarnSenseiJvmProcess {
     public CompletionStage<RemoteJvmProcess> onExit() {
         return status.thenApply(any -> this);
     }
+
+    @Override
+    public Object getExternalId() {
+        return applicationId;
+    }
 }

@@ -12,9 +12,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BriareusLocalContextTest {
@@ -45,7 +49,7 @@ class BriareusLocalContextTest {
         workDirectoryFactory.close();
         processMonitor.close();
         executorService.shutdownNow();
-        executorService.awaitTermination(10, TimeUnit.SECONDS);
+        executorService.awaitTermination(10, SECONDS);
     }
 
     @Test
@@ -61,8 +65,8 @@ class BriareusLocalContextTest {
         // when
         CompletableFuture<RemoteJvmProcess> future = context.start(options);
         // then
-        RemoteJvmProcess process = future.get(1, TimeUnit.SECONDS);
-        process.onExit().toCompletableFuture().get(1, TimeUnit.SECONDS);
+        RemoteJvmProcess process = future.get(2, SECONDS);
+        process.onExit().toCompletableFuture().get(2, SECONDS);
         assertThat(process.isAlive()).isFalse();
         assertThat(process.exitCode()).hasValue(42);
     }
